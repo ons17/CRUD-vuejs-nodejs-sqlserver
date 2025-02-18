@@ -4,14 +4,20 @@ const {
   GraphQLString,
   GraphQLInt,
   GraphQLList,
+  GraphQLNonNull,
 } = require("graphql");
 const {
   getAllUsers,
   addUser,
   updateUser,
   deleteUser,
+  getAllTasks,
+  addTask,
+  updateTask,
+  deleteTask,
 } = require("../db/dbOperations");
 
+// UserType definition
 const UserType = new GraphQLObjectType({
   name: "User",
   fields: {
@@ -25,6 +31,20 @@ const UserType = new GraphQLObjectType({
   },
 });
 
+// TaskType definition
+const TaskType = new GraphQLObjectType({
+  name: "Task",
+  fields: {
+    id: { type: GraphQLInt },
+    title: { type: GraphQLString },
+    description: { type: GraphQLString },
+    assigned_to: { type: GraphQLInt },
+    due_date: { type: GraphQLString },
+    status: { type: GraphQLString },
+  },
+});
+
+// RootQuery definition
 const RootQuery = new GraphQLObjectType({
   name: "RootQueryType",
   fields: {
@@ -34,9 +54,16 @@ const RootQuery = new GraphQLObjectType({
         return getAllUsers();
       },
     },
+    tasks: {
+      type: new GraphQLList(TaskType),
+      resolve(parent, args) {
+        return getAllTasks();
+      },
+    },
   },
 });
 
+// Mutation definition
 const Mutation = new GraphQLObjectType({
   name: "Mutation",
   fields: {
@@ -76,6 +103,42 @@ const Mutation = new GraphQLObjectType({
       },
       resolve(parent, args) {
         return deleteUser(args.id);
+      },
+    },
+    addTask: {
+      type: TaskType,
+      args: {
+        title: { type: new GraphQLNonNull(GraphQLString) },
+        description: { type: new GraphQLNonNull(GraphQLString) },
+        assigned_to: { type: new GraphQLNonNull(GraphQLInt) },
+        due_date: { type: new GraphQLNonNull(GraphQLString) },
+        status: { type: GraphQLString },
+      },
+      resolve(parent, args) {
+        return addTask(args);
+      },
+    },
+    updateTask: {
+      type: TaskType,
+      args: {
+        id: { type: new GraphQLNonNull(GraphQLInt) },
+        title: { type: GraphQLString },
+        description: { type: GraphQLString },
+        assigned_to: { type: GraphQLInt },
+        due_date: { type: GraphQLString },
+        status: { type: GraphQLString },
+      },
+      resolve(parent, { id, ...task }) {
+        return updateTask(id, task);
+      },
+    },
+    deleteTask: {
+      type: TaskType,
+      args: {
+        id: { type: new GraphQLNonNull(GraphQLInt) },
+      },
+      resolve(parent, { id }) {
+        return deleteTask(id);
       },
     },
   },
